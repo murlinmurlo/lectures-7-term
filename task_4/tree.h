@@ -67,9 +67,6 @@ public:
         return ptr;
     }
 
-
-
-
     TNodePtr ReplaceLeft(TNodePtr left) {
         SetParent(left, this -> shared_from_this());
         SetParent(Left, nullptr);
@@ -108,15 +105,15 @@ private:
 
     TNode(T value)
         : Value(value) 
-        {
-        }
+    {
+    }
 
     TNode(T value, TNodePtr left, TNodePtr right)
         : Value(value), 
         Left(left), 
         Right(right) 
-        {
-        }
+    {
+    }
 
     static void SetParent(TNodePtr node, TNodePtr parent) {
         if (node) {
