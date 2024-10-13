@@ -5,7 +5,7 @@
 namespace NBinTree {
 
 template <typename T>
-class TNode : public std::enable_shared_from_this<TNode<T>> {
+class TNode {
 public:
     using TNodePtr = std::shared_ptr<TNode<T>>;
     using TNodeConstPtr = std::shared_ptr<const TNode<T>>;
@@ -19,7 +19,7 @@ public:
     }
 
     bool HasParent() const {
-        return !Parent != nullptr;
+        return Parent != nullptr; //otut
     }
 
     T& GetValue() {
@@ -55,7 +55,7 @@ public:
     }
 
     static TNodePtr CreateLeaf(T value) {
-        return TNodePtr(new TNode(value));
+        return std::make_shared<TNode>(value);
     }
 
     static TNodePtr Fork(T value, TNodePtr left, TNodePtr right) {
@@ -66,15 +66,15 @@ public:
     }
 
     TNodePtr ReplaceLeft(TNodePtr left) {
-        SetParent(left, this -> shared_from_this());
+        SetParent(left, shared_from_this());
         SetParent(Left, nullptr);
         std::swap(left, Left);
         return left;
     }
 
     TNodePtr ReplaceRight(TNodePtr right) {
-        SetParent(right, this -> shared_from_this());
-        SetParent(Right, nullptr);  
+        SetParent(right, shared_from_this());
+        SetParent(Right, nullptr);
         std::swap(right, Right);
         return right;
     }
@@ -99,23 +99,23 @@ private:
     T Value;
     TNodePtr Left = nullptr;
     TNodePtr Right = nullptr;
-    TNodePtr Parent = nullptr;  
+    TNodePtr Parent = nullptr;
 
     TNode(T value)
-        : Value(value) 
-        {
-        }
+        : Value(value)
+    {
+    }
 
-    TNode(T value, TNodePtr left, TNodePtr right)
-        : Value(value), 
-        Left(left), 
-        Right(right) 
-        {
-        }
+    TNode(T value, TNode* left, TNode* right)
+        : Value(value)
+        , Left(left ? std::shared_ptr<TNode>(left) : nullptr)
+        , Right(right ? std::shared_ptr<TNode>(right) : nullptr)
+    {
+    }
 
     static void SetParent(TNodePtr node, TNodePtr parent) {
         if (node) {
-            node->Parent = parent;  
+            node->Parent = parent;
         }
     }
 };

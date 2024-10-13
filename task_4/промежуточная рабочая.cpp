@@ -19,7 +19,7 @@ public:
     }
 
     bool HasParent() const {
-        return !Parent != nullptr;
+        return !Parent != nullptr; //.expired();
     }
 
     T& GetValue() {
@@ -47,19 +47,22 @@ public:
     }
 
     TNodePtr GetParent() {
-        return Parent;
+        return Parent; //.lock(); 
     }
 
     TNodeConstPtr GetParent() const {
-        return Parent;
+        return Parent; //.lock(); 
     }
 
-    static TNodePtr CreateLeaf(T value) {
+    static TNodePtr CreateLeaf(T value) { //изменено
         return TNodePtr(new TNode(value));
     }
 
-    static TNodePtr Fork(T value, TNodePtr left, TNodePtr right) {
-        TNodePtr ptr = std::make_shared<TNode>(value, left.get(), right.get());
+    static TNodePtr Fork(T value, TNode* left, TNode* right) {
+        TNodePtr leftPtr = left ? left->shared_from_this() : nullptr;
+        TNodePtr rightPtr = right ? right->shared_from_this() : nullptr;
+
+        TNodePtr ptr = TNodePtr(new TNode(value, leftPtr, rightPtr));
         SetParent(ptr->GetLeft(), ptr);
         SetParent(ptr->GetRight(), ptr);
         return ptr;
