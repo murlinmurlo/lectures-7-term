@@ -19,7 +19,7 @@ public:
     }
 
     bool HasParent() const {
-        return Parent != nullptr;
+        return !Parent.expired();
     }
 
     T& GetValue() {
@@ -47,36 +47,40 @@ public:
     }
 
     TNodePtr GetParent() {
-        return Parent;
+        return Parent.lock();
     }
 
     TNodeConstPtr GetParent() const {
-        return Parent;
+        return Parent.lock();
     }
 
     static TNodePtr CreateLeaf(T value) {
-        return TNodePtr(new TNode(value));
+        return std::shared_ptr<TNode>(new TNode(value));
     }
 
     static TNodePtr Fork(T value, TNode* left, TNode* right) {
-        TNodePtr ptr = std::shared_ptr<TNode>(new TNode(value));
-        ptr->Left = left ? std::shared_ptr<TNode>(left) : nullptr;
-        ptr->Right = right ? std::shared_ptr<TNode>(right) : nullptr;
-        SetParent(ptr->Left, ptr);
-        SetParent(ptr->Right, ptr);
-        return ptr;
-    }
+    TNodePtr leftPtr = (left != nullptr) ? left->shared_from_this() : TNodePtr();
+    TNodePtr rightPtr = (right != nullptr) ? right->shared_from_this() : TNodePtr();
+
+    TNodePtr ptr(new TNode(value, leftPtr, rightPtr));
+    
+    if (ptr->GetLeft()) SetParent(ptr->GetLeft(), ptr);
+    if (ptr->GetRight()) SetParent(ptr->GetRight(), ptr);
+
+    return ptr;
+}
+
 
     TNodePtr ReplaceLeft(TNodePtr left) {
-        SetParent(left, this -> shared_from_this());
+        SetParent(left, this->shared_from_this());
         SetParent(Left, nullptr);
         std::swap(left, Left);
         return left;
     }
 
     TNodePtr ReplaceRight(TNodePtr right) {
-        SetParent(right, this -> shared_from_this());
-        SetParent(Right, nullptr);  
+        SetParent(right, this->shared_from_this());
+        SetParent(Right, nullptr);
         std::swap(right, Right);
         return right;
     }
@@ -101,7 +105,8 @@ private:
     T Value;
     TNodePtr Left = nullptr;
     TNodePtr Right = nullptr;
-    TNodePtr Parent = nullptr;  
+    std::weak_ptr<TNode> Parent;
+
 
     TNode(T value)
         : Value(value) 
@@ -117,9 +122,10 @@ private:
 
     static void SetParent(TNodePtr node, TNodePtr parent) {
         if (node) {
-            node->Parent = parent;  
+            node->Parent = parent;
         }
     }
+
 };
 
 } // namespace NBinTree
