@@ -114,6 +114,10 @@ public:
         return temp;
     }
 
+    size_t RefCount() const {
+        return ptr ? ptr->RefCount() : 0;
+    }
+
 protected:
     T* ptr;
 };
@@ -122,6 +126,10 @@ template<typename T>
 class TIntrusivePtr : public TPtr<T> {
 public:
     using TPtr<T>::TPtr;
+
+    size_t RefCount() const {
+        return TPtr<T>::RefCount();
+    }
 };
 
 template<typename T, typename... Args>

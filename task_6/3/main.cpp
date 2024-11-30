@@ -3,7 +3,6 @@
 class TDoc : public TRefCounter<TDoc> {
 public:
     TDoc() {}
-
     ~TDoc() {}
 };
 
@@ -18,6 +17,8 @@ int main() {
     ptr3.Reset(std::move(ptr2));
 
     static_assert(sizeof(TDoc*) == sizeof(ptr));
+
+    std::cout << ptr.RefCount() << std::endl;
 
     return 0;
 }
