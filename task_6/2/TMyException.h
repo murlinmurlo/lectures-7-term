@@ -13,6 +13,9 @@ public:
     explicit TMyException(const std::string& msg);
     virtual const char* what() const noexcept override;
 
+    TMyException& operator<<(const std::string& msg);
+    TMyException& operator<<(int value);
+
     friend std::ostream& operator<<(std::ostream& os, const TMyException& ex);
 };
 

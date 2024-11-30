@@ -2,7 +2,6 @@
 #include <gtest/gtest.h>
 #include "TMyException.h"
 
-
 TMyException::TMyException(const std::string& msg) : message(msg) {}
 
 const char* TMyException::what() const noexcept {
@@ -14,23 +13,35 @@ std::ostream& operator<<(std::ostream& os, const TMyException& ex) {
     return os;
 }
 
+TMyException& TMyException::operator<<(const std::string& msg) {
+    message += " " + msg;
+    return *this;
+}
+
+TMyException& TMyException::operator<<(int value) {
+    message += " " + std::to_string(value);
+    return *this;
+}
+
 TMyFirstException::TMyFirstException(const std::string& msg) 
-    : TMyException("exception 1: " + msg) {}
+    : TMyException(msg) {}
 
 TMySecondException::TMySecondException(const std::string& msg) 
-    : TMyException("exception 2: " + msg) {}
-
+    : TMyException(msg) {}
 
 TEST(MyExceptionTest, FirstExceptionTest) {
-    EXPECT_THROW({
-        throw TMyFirstException("error");
-    }, TMyFirstException);
+    int value = 42;
+    TMyFirstException ex("error:");
+    ex << "invalid value:" << value;
+    
+    EXPECT_STREQ(ex.what(), "error: invalid value: 42");
 }
 
 TEST(MyExceptionTest, SecondExceptionTest) {
-    EXPECT_THROW({
-        throw TMySecondException("error");
-    }, TMySecondException);
+    TMySecondException ex("error:");
+    ex << "some additional info";
+    
+    EXPECT_STREQ(ex.what(), "error: some additional info");
 }
 
 int main(int argc, char **argv) {
