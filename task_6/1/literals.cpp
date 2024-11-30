@@ -1,14 +1,14 @@
 #include <type_traits>
 #include <iostream>
+#include <array>
 
 template <char ...c>
 struct TString {
-    static constexpr char chars[sizeof...(c) + 1] = {c..., '\0'};
+    static constexpr std::array<char, sizeof...(c) + 1> chars = {c..., '\0'};
 };
 
 template <char ...c>
-constexpr char TString<c...>::chars[sizeof...(c) + 1];
-
+constexpr std::array<char, sizeof...(c) + 1> TString<c...>::chars;
 
 template <char ...c1, char ...c2>
 constexpr auto operator==(TString<c1...>, TString<c2...>) {
@@ -27,7 +27,7 @@ constexpr TString<c...> operator"" _s() {
 
 template <char ...c>
 std::ostream& operator<<(std::ostream& os, const TString<c...>&) {
-    return os << TString<c...>::chars;
+    return os << TString<c...>::chars.data();
 }
 
 int main() {
