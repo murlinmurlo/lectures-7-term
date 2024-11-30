@@ -6,27 +6,25 @@
 #include <ostream>
 
 class TMyException : public std::exception {
-private:
-    std::string message;
-
 public:
-    explicit TMyException(const std::string& msg);
-    virtual const char* what() const noexcept override;
+    TMyException(const std::string& msg);
+    const char* what() const noexcept override;
 
-    TMyException& operator<<(const std::string& msg);
-    TMyException& operator<<(int value);
+    template<typename T>
+    TMyException& operator<<(const T& value);
 
-    friend std::ostream& operator<<(std::ostream& os, const TMyException& ex);
+protected:
+    std::string message;
 };
 
 class TMyFirstException : public TMyException {
 public:
-    explicit TMyFirstException(const std::string& msg);
+    TMyFirstException(const std::string& msg);
 };
 
 class TMySecondException : public TMyException {
 public:
-    explicit TMySecondException(const std::string& msg);
+    TMySecondException(const std::string& msg);
 };
 
 #endif
