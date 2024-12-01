@@ -62,8 +62,11 @@ template<typename T>
 class TIntrusivePtr : public TPtr<T> {
 public:
     using TPtr<T>::TPtr;
+        size_t RefCount() const {
+        return this->ptr ? this->ptr->RefCount() : 0;
+    }
 
-        void Reset(T* p = nullptr) {
+    void Reset(T* p = nullptr) {
         if (this->ptr) {
             this->ptr->Release();
         }
