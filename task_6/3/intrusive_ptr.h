@@ -1,20 +1,22 @@
-#ifndef INTRUSIVE_PTR_H
-#define INTRUSIVE_PTR_H
-
-#include <utility>
 #include <iostream>
+#include <utility>
+#include <cassert>
 
 template<typename T>
-class TRefCounter {
+class TRef_counter {
+private:
+    size_t ref_count;
+
 public:
-    TRefCounter() : ref_count(0) {}
+    TRef_counter() : ref_count(0) {}
 
     void NewRef() {
         ++ref_count;
     }
 
     void Release() {
-        if (--ref_count == 0) {
+        --ref_count;
+        if (ref_count == 0) {
             delete static_cast<T*>(this);
         }
     }
@@ -22,52 +24,21 @@ public:
     size_t RefCount() const {
         return ref_count;
     }
-
-private:
-    size_t ref_count;
 };
 
 template<typename T>
 class TPtr {
 public:
-    TPtr(T* ptr = nullptr) : ptr(ptr) {
-        if (ptr) {
-            ptr->NewRef();
-        }
+    T* ptr;
+
+    TPtr(T* ptr = nullptr) : ptr(ptr) {}
+
+    bool operator==(const TPtr& other) const {
+        return ptr == other.ptr;
     }
 
-    TPtr(const TPtr& other) : ptr(other.ptr) {
-        if (ptr) {
-            ptr->NewRef();
-        }
-    }
-
-    TPtr(TPtr&& other) noexcept : ptr(other.ptr) {
-        other.ptr = nullptr;
-    }
-
-    ~TPtr() {
-        Reset();
-    }
-
-    TPtr& operator=(const TPtr& other) {
-        if (this != &other) {
-            Reset();
-            ptr = other.ptr;
-            if (ptr) {
-                ptr->NewRef();
-            }
-        }
-        return *this;
-    }
-
-    TPtr& operator=(TPtr&& other) noexcept {
-        if (this != &other) {
-            Reset();
-            ptr = other.ptr;
-            other.ptr = nullptr;
-        }
-        return *this;
+    bool operator!=(const TPtr& other) const {
+        return ptr != other.ptr;
     }
 
     T* operator->() const {
@@ -78,48 +49,13 @@ public:
         return *ptr;
     }
 
-    explicit operator bool() const {
+    operator bool() const {
         return ptr != nullptr;
-    }
-
-    bool operator==(const TPtr& other) const {
-        return ptr == other.ptr;
-    }
-
-    bool operator!=(const TPtr& other) const {
-        return ptr != other.ptr;
     }
 
     T* Get() const {
         return ptr;
     }
-
-    void Reset(T* ptr_new = nullptr) {
-        if (ptr) {
-            ptr->Release();
-        }
-        ptr = ptr_new;
-        if (ptr) {
-            ptr->NewRef();
-        }
-    }
-
-    void Reset(const TPtr& ptr_new) {
-        Reset(ptr_new.Get());
-    }
-
-    T* Release() {
-        T* temp = ptr;
-        ptr = nullptr;
-        return temp;
-    }
-
-    size_t RefCount() const {
-        return ptr ? ptr->RefCount() : 0;
-    }
-
-protected:
-    T* ptr;
 };
 
 template<typename T>
@@ -127,8 +63,86 @@ class TIntrusivePtr : public TPtr<T> {
 public:
     using TPtr<T>::TPtr;
 
-    size_t RefCount() const {
-        return TPtr<T>::RefCount();
+        void Reset(T* p = nullptr) {
+        if (this->ptr) {
+            this->ptr->Release();
+        }
+        this->ptr = p;
+        if (this->ptr) {
+            this->ptr->NewRef();
+        }
+    }
+
+    void Reset(TIntrusivePtr& other) {
+        if (this != &other) {
+            if (this->ptr) {
+                this->ptr->Release();
+            }
+            this->ptr = other.ptr;
+            if (this->ptr) {
+                this->ptr->NewRef();
+            }
+        }
+    }
+
+    void Reset(TIntrusivePtr&& other) {
+        if (this != &other) {
+            if (this->ptr) {
+                this->ptr->Release();
+            }
+            this->ptr = other.ptr;
+            other.ptr = nullptr;
+        }
+    }
+
+    T* Release() {
+        T* temp = this->ptr;
+        this->ptr = nullptr;
+        return temp;
+    }
+
+    TIntrusivePtr(T* p = nullptr) : TPtr<T>(p) {
+        if (this->ptr) {
+            this->ptr->NewRef();
+        }
+    }
+
+    TIntrusivePtr(const TIntrusivePtr& other) : TPtr<T>(other.ptr) {
+        if (this->ptr) {
+            this->ptr->NewRef();
+        }
+    }
+
+    TIntrusivePtr(TIntrusivePtr&& other) noexcept : TPtr<T>(other.ptr) {
+        other.ptr = nullptr;
+    }
+
+    ~TIntrusivePtr() {
+        Reset();
+    }
+
+    TIntrusivePtr& operator=(const TIntrusivePtr& other) {
+        if (this != &other) {
+            if (this->ptr) {
+                this->ptr->Release();
+            }
+            this->ptr = other.ptr;
+            if (this->ptr) {
+                this->ptr->NewRef();
+            }
+        }
+        return *this;
+    }
+
+    TIntrusivePtr& operator=(TIntrusivePtr&& other) noexcept {
+        if (this != &other) {
+            if (this->ptr) {
+                this->ptr->Release();
+            }
+            this->ptr = other.ptr;
+            other.ptr = nullptr;
+        }
+        return *this;
     }
 };
 
@@ -136,5 +150,3 @@ template<typename T, typename... Args>
 TIntrusivePtr<T> MakeIntrusive(Args&&... args) {
     return TIntrusivePtr<T>(new T(std::forward<Args>(args)...));
 }
-
-#endif
